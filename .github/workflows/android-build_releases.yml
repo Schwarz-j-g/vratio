@@ -8,6 +8,9 @@ on:
       - 'vratim/**'
       - '.github/workflows/android-build-release.yml'
 
+defaults:
+  run:
+    working-directory: ./vratim
 
 jobs:
   build:

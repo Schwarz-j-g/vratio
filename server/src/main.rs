@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 use std::net::SocketAddr;
 
 use tokio::net::TcpListener;

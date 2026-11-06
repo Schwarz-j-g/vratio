@@ -42,7 +42,7 @@ jobs:
     - name: Publish Artifact to GitHub Releases
       uses: softprops/action-gh-release@v2
       with:
-        files: android-app/app/build/outputs/apk/debug/vratim.apk
+        files: vratim/app/build/outputs/apk/debug/vratim.apk
         name: Release ${{ github.ref_name }}
         tag_name: ${{ github.ref }}
         draft: false

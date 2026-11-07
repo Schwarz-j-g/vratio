@@ -16,7 +16,7 @@ You can completely update the configuration, by copying JSON to the smartphone c
 1. The names of all fields must be strictly in **lowercase**.
 2. Maximum number of elements in an array `entities` — **256**.
 3. The numeric ranges for `id` and `status` are strictly within **0..255**.
-4. Если у сущности в массиве отсутствует поле `id`, рантайм автоматически подставит её порядковый индекс в массиве.
+4. If an entity does not have an `id` field in the array, runtime will automatically substitute its ordinal index in the array.
 
 ### Example config:
 ```json
@@ -28,7 +28,7 @@ You can completely update the configuration, by copying JSON to the smartphone c
   "entities": [
     {
       "name": "Room lighting",
-      "id": 1,
+      "id": 0,
       "texts": [
         { "status": 0, "text": "Off" },
         { "status": 1, "text": "Included" }
@@ -52,17 +52,20 @@ You can completely update the configuration, by copying JSON to the smartphone c
       "menu_global": "Global Settings",
       "menu_paste": "Paste JSON",
       "menu_refresh": "Update status",
-      "entity_label": "Target"
+      "entity_label": "Target",
+      "import_title": "Import configuration",
+      "status_idle": "Waiting for input...",
+      "import_placeholder": "Paste JSON text here..."
     }
   ]
 }
 ```
 
 ## Deployment instructions for users
-1. **Настройте сервер:** Run your Rust server locally on your PC and forward it to the network via Loophole, receiving a public HTTPS link.
-2. **Скачайте клиент:** Go to the [**Releases**](../../releases) tab and download the current `vratim.apk` file.
-3. **Установите на телефон:** Transfer the APK to your real Android smartphone and install (allowing installation from unknown sources in security settings).
-4. **Примените конфигурацию:** 
+1. **Set up the server:** Run your Rust server locally on your PC and forward it to the network via Loophole, receiving a public HTTPS link.
+2. **Download the client:** Go to the [**Releases**](../../releases) tab and download the current `vratim.apk` file.
+3. **Install on your phone:** Transfer the APK to your real Android smartphone and install (allowing installation from unknown sources in security settings).
+4. **Apply the configuration:**
    * Generate your personal JSON config.
    * Copy the resulting JSON text in its entirety.
    * Open the app on your smartphone, click on the gear icon in the top right corner and select **"Paste JSON"**.

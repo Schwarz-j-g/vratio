@@ -11,11 +11,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration.Companion.milliseconds
 
 data class AppState(
     val config: Config? = null,
     val serverStatuses: ByteArray = ByteArray(256),
-    val errorLog: String = ""
+    val actionLog: String = ""
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -86,7 +87,7 @@ class Manager(private val context: Context) {
                 postPrefix = post,
                 currentLang = lang
             )
-            val rawJson = kotlinx.serialization.json.Json.encodeToString(Config.serializer(), updatedConfig)
+            val rawJson = Json.encodeToString(Config.serializer(), updatedConfig)
             val success = ConfigManager.updateConfigFromText(context, rawJson)
             if (success) {
                 _state.update { it.copy(config = updatedConfig) }
@@ -105,21 +106,19 @@ class Manager(private val context: Context) {
                 }
             }
             val updatedConfig = currentConfig.copy(entities = updatedEntities)
-            val rawJson = kotlinx.serialization.json.Json.encodeToString(Config.serializer(), updatedConfig)
+            val rawJson = Json.encodeToString(Config.serializer(), updatedConfig)
             val success = ConfigManager.updateConfigFromText(context, rawJson)
             if (success) {
                 _state.update { it.copy(config = updatedConfig) }
             }
         }
     }
-
-    fun importConfigFromText(rawJson: String) {
-        if (rawJson.isBlank()) {
-            _state.update { it.copy(errorLog = "Clipboard is empty") }
-            return
-        }
-
+    fun importConfigWithLogging(rawJson: String) {
         scope.launch {
+            _state.update { it.copy(actionLog = "Validity check...") }
+
+            kotlinx.coroutines.delay(300.milliseconds)
+
             try {
                 val jsonParser = Json {
                     ignoreUnknownKeys = true
@@ -129,24 +128,36 @@ class Manager(private val context: Context) {
                 val parsedConfig = jsonParser.decodeFromString<Config>(rawJson)
 
                 if (!parsedConfig.isValid()) {
-                    _state.update { it.copy(errorLog = "isValid() == false") }
+                    _state.update { it.copy(actionLog = "ID or Status is beyond 0..255, or entities > 256") }
                     return@launch
                 }
 
-                val success = ConfigManager.updateConfigFromText(context, rawJson)
+                _state.update { it.copy(actionLog = "Сохранение конфигурации...") }
+                kotlinx.coroutines.delay(300.milliseconds)
+
+                val success = withContext(Dispatchers.IO) {
+                    ConfigManager.updateConfigFromText(context, rawJson)
+                }
+
                 if (success) {
                     val newConfig = ConfigManager.loadConfig(context)
-                    _state.update { it.copy(config = newConfig, errorLog = "") }
+                    _state.update { it.copy(config = newConfig, actionLog = "Configuration successfully updated!") }
+
+                    // Сетевой опрос сервера Чтеца по новым адресам из свежего конфига
                     refreshServerStatuses()
                 } else {
-                    _state.update { it.copy(errorLog = "Failure to write a file to the smartphone disk") }
+                    _state.update { it.copy(actionLog = "The operating system denied access to the disk") }
                 }
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                val msg = e.localizedMessage ?: e.message ?: "Unknown serialization error"
-                _state.update { it.copy(errorLog = msg) }
+                val msg = e.localizedMessage ?: e.message ?: "Unknown syntax error"
+                _state.update { it.copy(actionLog = "JSON parsing failed: $msg") }
             }
         }
+
+    }
+    fun resetActionLog() {
+        _state.update { it.copy(actionLog = "") }
     }
 }

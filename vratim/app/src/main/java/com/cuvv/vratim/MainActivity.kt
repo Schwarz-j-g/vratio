@@ -1,6 +1,5 @@
 package com.cuvv.vratim
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,9 +13,9 @@ import androidx.compose.ui.graphics.Color
 import com.cuvv.vratim.writescreen.AppContainer
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         val manager = Manager(applicationContext)
 
         setContent {
@@ -33,20 +32,12 @@ class MainActivity : ComponentActivity() {
                         AppContainer(
                             config = currentConfig,
                             serverStatuses = appState.serverStatuses,
-                            errorLog = appState.errorLog,
+                            actionLog = appState.actionLog,
                             onRefreshTriggered = { manager.refreshServerStatuses() },
-                            onJsonPasteTriggered = {
-                                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                                val clipData = clipboard.primaryClip
-                                if (clipData != null && clipData.itemCount > 0) {
-                                    val rawText = clipData.getItemAt(0).coerceToText(applicationContext)?.toString() ?: ""
-                                    val cleanText = rawText.replace("\r", "").trim()
-
-                                    if (cleanText.isNotEmpty()) {
-                                        manager.importConfigFromText(cleanText)
-                                    }
-                                }
+                            onJsonPasteTriggered = { textFromUiField ->
+                                manager.importConfigWithLogging(textFromUiField)
                             },
+                            onResetActionLog = { manager.resetActionLog() },
                             onSendPacketTriggered = { entityId, status ->
                                 manager.sendPacket(entityId, status)
                             },

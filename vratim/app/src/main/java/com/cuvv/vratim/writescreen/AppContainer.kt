@@ -15,14 +15,16 @@ const val SCREEN_READ_LIST = 0
 const val SCREEN_SEND_STATUS = 1
 const val SCREEN_EDIT_GLOBAL = 2
 const val SCREEN_EDIT_ENTITY = 3
+const val SCREEN_PASTE_CONFIG = 4;
 
 @Composable
 fun AppContainer(
     config: Config,
     serverStatuses: ByteArray,
-    errorLog: String,
+    actionLog: String,
     onRefreshTriggered: () -> Unit,
-    onJsonPasteTriggered: () -> Unit,
+    onJsonPasteTriggered: (rawJson: String) -> Unit,
+    onResetActionLog: () -> Unit,
     onSendPacketTriggered: (entityId: Int, status: Int) -> Unit,
     onGlobalConfigSaved: (url: String, get: String, post: String, lang: String) -> Unit,
     onEntityMappingsSaved: (entityId: Int, mappings: List<Text>) -> Unit,
@@ -49,7 +51,7 @@ fun AppContainer(
                             currentScreen = SCREEN_EDIT_GLOBAL
                         }
                         "ACTION_PASTE" -> {
-                            onJsonPasteTriggered()
+                            currentScreen = SCREEN_PASTE_CONFIG
                         }
                         "ACTION_REFRESH" -> {
                             onRefreshTriggered()
@@ -65,22 +67,8 @@ fun AppContainer(
             Box(modifier = Modifier.weight(1f)) {
                 when (currentScreen) {
                     SCREEN_READ_LIST -> {
-                        val displayConfig = if (errorLog.isNotEmpty()) {
-                            config.copy(
-                                entities = listOf(
-                                    EntityItem(
-                                        name = "ERROR: $errorLog",
-                                        entityId = 0,
-                                        texts = emptyList()
-                                    )
-                                ) + config.entities
-                            )
-                        } else {
-                            config
-                        }
-
                         EntityReadList(
-                            config = displayConfig,
+                            config = config,
                             serverStatuses = serverStatuses,
                             onEntityClick = { entityId ->
                                 activeEntityIdForEdit = entityId
@@ -124,6 +112,20 @@ fun AppContainer(
                             onSaveClick = { entityId, updatedMappings ->
                                 onEntityMappingsSaved(entityId, updatedMappings)
                                 currentScreen = SCREEN_READ_LIST
+                            }
+                        )
+                    }
+
+                    SCREEN_PASTE_CONFIG -> {
+                        PasteConfig(
+                            langMap = langMap,
+                            actionLog = actionLog,
+                            onBackClick = {
+                                onResetActionLog()
+                                currentScreen = SCREEN_READ_LIST
+                            },
+                            onSaveClick = { rawJson ->
+                                onJsonPasteTriggered(rawJson)
                             }
                         )
                     }

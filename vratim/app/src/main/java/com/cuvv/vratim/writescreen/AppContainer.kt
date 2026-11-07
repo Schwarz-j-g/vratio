@@ -11,7 +11,7 @@ import com.cuvv.vratim.Config
 import com.cuvv.vratim.Text
 
 const val SCREEN_READ_LIST = 0
-const val SCREEN_SEND_STATUS = 1  //
+const val SCREEN_SEND_STATUS = 1
 const val SCREEN_EDIT_GLOBAL = 2
 const val SCREEN_EDIT_ENTITY = 3
 
@@ -24,7 +24,6 @@ fun AppContainer(
     onSendPacketTriggered: (entityId: Int, status: Int) -> Unit,
     onGlobalConfigSaved: (url: String, get: String, post: String, lang: String) -> Unit,
     onEntityMappingsSaved: (entityId: Int, mappings: List<Text>) -> Unit,
-    modifier: Modifier = Modifier
 ) {
     var currentScreen by rememberSaveable { mutableStateOf(SCREEN_READ_LIST) }
 
@@ -36,7 +35,9 @@ fun AppContainer(
     }
 
     SystemBackground {
-        Column(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
 
             TopHeader(
                 langMap = langMap,
@@ -66,7 +67,7 @@ fun AppContainer(
                             config = config,
                             serverStatuses = serverStatuses,
                             onEntityClick = { entityId ->
-                                activeEntityIdForWrite = entityId
+                                activeEntityIdForEdit = entityId
                                 currentScreen = SCREEN_EDIT_ENTITY
                             },
                             onRefreshClick = onRefreshTriggered

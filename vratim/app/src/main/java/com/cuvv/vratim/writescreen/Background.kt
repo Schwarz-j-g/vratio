@@ -45,7 +45,7 @@ class LineCoords(
 
 private fun generateStaticLines(): Array<LineCoords> {
     val random = Random(42)
-    val lineCount = 8
+    val lineCount = 15
 
     return Array(lineCount) {
         LineCoords(

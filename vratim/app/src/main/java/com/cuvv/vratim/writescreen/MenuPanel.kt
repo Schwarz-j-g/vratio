@@ -17,7 +17,7 @@ fun MenuPanel(
     onMenuActionClick: (actionKey: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val menuBackground = Color(0xFF1E2225) // Графитовый обсидиановый
+    val menuBackground = Color(0xFF1E2225)
     val textPrimary = Color(0xFFE2E8F0)
 
     Box(
@@ -29,7 +29,7 @@ fun MenuPanel(
             modifier = Modifier.background(menuBackground)
         ) {
             DropdownMenuItem(
-                text = { Text(langMap["menu_send_status"] ?: "Отправить статус", color = textPrimary) },
+                text = { Text(langMap["menu_send_status"] ?: "Send status", color = textPrimary) },
                 onClick = {
                     onMenuActionClick("ACTION_OPEN_SEND_FREE")
                     onDismiss()

@@ -39,7 +39,7 @@ fun EntityReadList(
         ) {
             items(
                 count = entities.size,
-                key = { index -> entities[index].getActiveId(index) }
+                key = { index -> index }
             ) { index ->
                 val entity = entities[index]
                 val activeId = entity.getActiveId(index)
@@ -110,7 +110,7 @@ private fun ReadEntityCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = name, style = MaterialTheme.typography.titleMedium, color = textPrimary)
-            Text(text = "{ $statusText }", style = MaterialTheme.typography.bodyMedium, color = textSecondary)
+            Text(text = statusText, style = MaterialTheme.typography.bodyMedium, color = textSecondary)
         }
     }
 }

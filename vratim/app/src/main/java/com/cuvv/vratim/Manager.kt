@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 
 data class AppState(
     val config: Config? = null,
@@ -112,16 +113,39 @@ class Manager(private val context: Context) {
         }
     }
 
-    fun importConfigFromText(rawJson: String): Boolean {
-        var success = false
+    fun importConfigFromText(rawJson: String, onError: (String) -> Unit) {
+        if (rawJson.isBlank()) {
+            onError("The clipboard is empty or contains non-text data")
+            return
+        }
+
         scope.launch {
-            success = ConfigManager.updateConfigFromText(context, rawJson)
-            if (success) {
-                val newConfig = ConfigManager.loadConfig(context)
-                _state.update { it.copy(config = newConfig) }
-                refreshServerStatuses()
+            try {
+                val jsonParser = Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                }
+
+                val parsedConfig = jsonParser.decodeFromString<Config>(rawJson)
+
+                if (!parsedConfig.isValid()) {
+                    throw IllegalArgumentException("Validation failed: Number of entities > 256, or ID/Status is out of byte")
+                }
+
+                val success = ConfigManager.updateConfigFromText(context, rawJson)
+                if (success) {
+                    val newConfig = ConfigManager.loadConfig(context)
+                    _state.update { it.copy(config = newConfig) }
+                    refreshServerStatuses()
+                } else {
+                    throw IllegalStateException("The file system refused to rewrite app-config.json")
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val errorMessage = e.localizedMessage ?: e.message ?: "Unknown JSON parsing error"
+                onError("Import failed: $errorMessage")
             }
         }
-        return success
     }
 }

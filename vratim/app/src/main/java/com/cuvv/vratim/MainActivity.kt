@@ -38,8 +38,13 @@ class MainActivity : ComponentActivity() {
                                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                                 val clipData = clipboard.primaryClip
                                 if (clipData != null && clipData.itemCount > 0) {
-                                    val text = clipData.getItemAt(0).text?.toString() ?: ""
-                                    manager.importConfigFromText(text)
+
+                                    val rawText = clipData.getItemAt(0).coerceToText(applicationContext)?.toString() ?: ""
+                                    val cleanText = rawText.replace("\r", "").trim()
+
+                                    manager.importConfigFromText(cleanText) { errorLog ->
+                                        throw RuntimeException("DIAGNOSTIC CRASH: $errorLog")
+                                    }
                                 }
                             },
                             onSendPacketTriggered = { entityId, status ->

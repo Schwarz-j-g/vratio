@@ -14,7 +14,8 @@ import kotlinx.serialization.json.Json
 
 data class AppState(
     val config: Config? = null,
-    val serverStatuses: ByteArray = ByteArray(256)
+    val serverStatuses: ByteArray = ByteArray(256),
+    val errorLog: String = ""
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -63,7 +64,6 @@ class Manager(private val context: Context) {
     fun sendPacket(entityId: Int, status: Int) {
         val config = _state.value.config ?: return
         scope.launch {
-            // Выполняем Zero-allocation сборку 2-байтового кадра
             val packet = TransportPacket.fromEntity(entityId, status)
             val fullUrl = "${config.url}${config.postPrefix}"
 
@@ -113,9 +113,9 @@ class Manager(private val context: Context) {
         }
     }
 
-    fun importConfigFromText(rawJson: String, onError: (String) -> Unit) {
+    fun importConfigFromText(rawJson: String) {
         if (rawJson.isBlank()) {
-            onError("The clipboard is empty or contains non-text data")
+            _state.update { it.copy(errorLog = "Clipboard is empty") }
             return
         }
 
@@ -129,22 +129,23 @@ class Manager(private val context: Context) {
                 val parsedConfig = jsonParser.decodeFromString<Config>(rawJson)
 
                 if (!parsedConfig.isValid()) {
-                    throw IllegalArgumentException("Validation failed: Number of entities > 256, or ID/Status is out of byte")
+                    _state.update { it.copy(errorLog = "isValid() == false") }
+                    return@launch
                 }
 
                 val success = ConfigManager.updateConfigFromText(context, rawJson)
                 if (success) {
                     val newConfig = ConfigManager.loadConfig(context)
-                    _state.update { it.copy(config = newConfig) }
+                    _state.update { it.copy(config = newConfig, errorLog = "") }
                     refreshServerStatuses()
                 } else {
-                    throw IllegalStateException("The file system refused to rewrite app-config.json")
+                    _state.update { it.copy(errorLog = "Failure to write a file to the smartphone disk") }
                 }
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                val errorMessage = e.localizedMessage ?: e.message ?: "Unknown JSON parsing error"
-                onError("Import failed: $errorMessage")
+                val msg = e.localizedMessage ?: e.message ?: "Unknown serialization error"
+                _state.update { it.copy(errorLog = msg) }
             }
         }
     }

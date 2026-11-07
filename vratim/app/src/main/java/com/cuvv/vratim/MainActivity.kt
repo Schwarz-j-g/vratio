@@ -33,17 +33,17 @@ class MainActivity : ComponentActivity() {
                         AppContainer(
                             config = currentConfig,
                             serverStatuses = appState.serverStatuses,
+                            errorLog = appState.errorLog,
                             onRefreshTriggered = { manager.refreshServerStatuses() },
                             onJsonPasteTriggered = {
                                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                                 val clipData = clipboard.primaryClip
                                 if (clipData != null && clipData.itemCount > 0) {
-
                                     val rawText = clipData.getItemAt(0).coerceToText(applicationContext)?.toString() ?: ""
                                     val cleanText = rawText.replace("\r", "").trim()
 
-                                    manager.importConfigFromText(cleanText) { errorLog ->
-                                        throw RuntimeException("DIAGNOSTIC CRASH: $errorLog")
+                                    if (cleanText.isNotEmpty()) {
+                                        manager.importConfigFromText(cleanText)
                                     }
                                 }
                             },

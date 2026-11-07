@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import com.cuvv.vratim.Config
+import com.cuvv.vratim.EntityItem
 import com.cuvv.vratim.Text
 
 const val SCREEN_READ_LIST = 0
@@ -19,6 +20,7 @@ const val SCREEN_EDIT_ENTITY = 3
 fun AppContainer(
     config: Config,
     serverStatuses: ByteArray,
+    errorLog: String,
     onRefreshTriggered: () -> Unit,
     onJsonPasteTriggered: () -> Unit,
     onSendPacketTriggered: (entityId: Int, status: Int) -> Unit,
@@ -63,8 +65,22 @@ fun AppContainer(
             Box(modifier = Modifier.weight(1f)) {
                 when (currentScreen) {
                     SCREEN_READ_LIST -> {
+                        val displayConfig = if (errorLog.isNotEmpty()) {
+                            config.copy(
+                                entities = listOf(
+                                    EntityItem(
+                                        name = "ERROR: $errorLog",
+                                        entityId = 0,
+                                        texts = emptyList()
+                                    )
+                                ) + config.entities
+                            )
+                        } else {
+                            config
+                        }
+
                         EntityReadList(
-                            config = config,
+                            config = displayConfig,
                             serverStatuses = serverStatuses,
                             onEntityClick = { entityId ->
                                 activeEntityIdForEdit = entityId
